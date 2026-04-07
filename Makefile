@@ -1,7 +1,9 @@
 .PHONY: generate build open clean run
 
+XCODEGEN := /opt/homebrew/bin/xcodegen
+
 generate:
-	xcodegen generate
+	$(XCODEGEN) generate
 
 build: generate
 	xcodebuild -project NotchAgent.xcodeproj -scheme NotchAgent -configuration Debug build
