@@ -6,7 +6,6 @@ struct NotchAgentApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {
-        // Use Settings scene as a placeholder — real UI is in the NSPanel
         Settings {
             EmptyView()
         }
@@ -18,6 +17,7 @@ struct NotchAgentApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: NSPanel?
     private var statusItem: NSStatusItem?
+    private let appState = AppState()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon — this is a menu bar / overlay app
@@ -25,6 +25,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupMenuBarItem()
         setupNotchPanel()
+        appState.startSocketServer()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        appState.stopSocketServer()
     }
 
     // MARK: - Menu Bar
@@ -79,7 +84,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panel.isMovableByWindowBackground = false
         panel.animationBehavior = .utilityWindow
 
-        let hostingView = NSHostingView(rootView: NotchPanelView())
+        let hostingView = NSHostingView(rootView: NotchPanelView(appState: appState))
         hostingView.frame = panel.contentView?.bounds ?? .zero
         hostingView.autoresizingMask = [.width, .height]
         panel.contentView?.addSubview(hostingView)

@@ -1,12 +1,12 @@
 import SwiftUI
 
 struct NotchPanelView: View {
-    @StateObject private var viewModel = NotchPanelViewModel()
+    @ObservedObject var appState: AppState
     @State private var isHovering = false
 
     var body: some View {
         VStack(spacing: 0) {
-            if isHovering && !viewModel.sessions.isEmpty {
+            if isHovering && !appState.sessions.isEmpty {
                 expandedView
                     .transition(.opacity.combined(with: .move(edge: .top)))
             } else {
@@ -29,16 +29,17 @@ struct NotchPanelView: View {
 
     private var collapsedView: some View {
         HStack(spacing: 6) {
-            if viewModel.activeSessions.isEmpty {
+            if appState.activeSessions.isEmpty {
                 Circle()
                     .fill(.gray.opacity(0.4))
                     .frame(width: 6, height: 6)
             } else {
-                ForEach(viewModel.activeSessions) { session in
-                    AgentDotView(session: session)
-                }
+                // Status emoji badge
+                Text(appState.latestActiveSession?.status.emoji ?? "😐")
+                    .font(.system(size: 14))
+                    .shadow(color: .black.opacity(0.5), radius: 2)
 
-                if let latest = viewModel.latestActiveSession {
+                if let latest = appState.latestActiveSession {
                     Text(latest.truncatedMessage)
                         .font(.system(size: 10))
                         .foregroundColor(.white.opacity(0.7))
@@ -59,13 +60,12 @@ struct NotchPanelView: View {
 
     private var expandedView: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // Header
             HStack {
                 Text("NotchAgent")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.5))
                 Spacer()
-                Text("\(viewModel.activeSessions.count) active")
+                Text("\(appState.activeSessions.count) active")
                     .font(.system(size: 9))
                     .foregroundColor(.white.opacity(0.4))
             }
@@ -74,10 +74,9 @@ struct NotchPanelView: View {
             Divider()
                 .background(.white.opacity(0.1))
 
-            // Agent rows
-            ForEach(viewModel.sessions) { session in
+            ForEach(appState.sessions) { session in
                 AgentRowView(session: session)
-                if session.id != viewModel.sessions.last?.id {
+                if session.id != appState.sessions.last?.id {
                     Divider()
                         .background(.white.opacity(0.05))
                 }
@@ -85,46 +84,5 @@ struct NotchPanelView: View {
         }
         .padding(12)
         .frame(width: 280)
-    }
-}
-
-// MARK: - ViewModel with Mock Data
-
-class NotchPanelViewModel: ObservableObject {
-    @Published var sessions: [AgentSession]
-
-    var activeSessions: [AgentSession] {
-        sessions.filter { $0.status != .idle }
-    }
-
-    var latestActiveSession: AgentSession? {
-        activeSessions.sorted { $0.timestamp > $1.timestamp }.first
-    }
-
-    init() {
-        // M1: Mock data for UI verification
-        self.sessions = [
-            AgentSession(
-                agentType: .claude,
-                status: .working,
-                message: "Refactoring auth middleware...",
-                timestamp: Date().addingTimeInterval(-120),
-                project: "notch-agent"
-            ),
-            AgentSession(
-                agentType: .gemini,
-                status: .waiting,
-                message: "Permission: write to /src/db.ts?",
-                timestamp: Date().addingTimeInterval(-45),
-                project: "api-server"
-            ),
-            AgentSession(
-                agentType: .codex,
-                status: .done,
-                message: "Added unit tests for parser",
-                timestamp: Date().addingTimeInterval(-600),
-                project: "data-pipeline"
-            ),
-        ]
     }
 }

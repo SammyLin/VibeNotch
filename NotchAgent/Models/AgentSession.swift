@@ -37,6 +37,17 @@ enum AgentStatus: String, CaseIterable {
         case .error: return .red
         }
     }
+
+    /// Emoji displayed in the notch panel for each status
+    var emoji: String {
+        switch self {
+        case .idle: return "😐"
+        case .working: return "⚙️"
+        case .waiting: return "⏳"
+        case .done: return "✅"
+        case .error: return "❌"
+        }
+    }
 }
 
 // MARK: - Agent Session
